@@ -4,6 +4,7 @@ import { Group, Plane, Vector3, MathUtils } from 'three';
 import type { PlacedItem } from '../../types';
 import { CATALOG } from '../../data/catalog';
 import { useNookStore } from '../../store/useNookStore';
+import { THEMES } from '../../data/themes';
 import { dragOffset } from '../../lib/dragState';
 import { easeOutBack } from '../../lib/math';
 import { playTick } from '../../lib/sound';
@@ -24,6 +25,7 @@ const hit = new Vector3(); // reused scratch vector — no allocations per event
 export function Furniture({ item }: { item: PlacedItem }) {
   const group = useRef<Group>(null);
   const def = CATALOG[item.type];
+  const theme = useNookStore((s) => THEMES[s.currentTheme]);
   const select = useNookStore((s) => s.select);
   const setDragging = useNookStore((s) => s.setDragging);
 
@@ -75,7 +77,7 @@ export function Furniture({ item }: { item: PlacedItem }) {
       onPointerOver={() => (document.body.style.cursor = 'grab')}
       onPointerOut={() => (document.body.style.cursor = 'default')}
     >
-      <def.Model color={item.color} />
+      <def.Model color={item.color} theme={theme} />
     </group>
   );
 }

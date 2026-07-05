@@ -1,26 +1,35 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { FurnitureType, PlacedItem, RoomSize } from '../types';
+import type { FurnitureType, PlacedItem, RoomSize, ThemeName } from '../types';
 import { CATALOG } from '../data/catalog';
+import { THEMES } from '../data/themes';
 import { clampToRoom, snap } from '../lib/math';
 
 /**
- * ─── PHASE 1: State Management (Zustand) ─────────────────────────────────
+ * ─── PHASE 1 (v2): State Management ──────────────────────────────────────
  * One store holds everything. UI components (sidebar, inspector) and 3D
- * components (furniture meshes) both read from and write to this store,
- * which is how a 2D HTML panel can "talk" to a 3D canvas instantly.
+ * components (furniture, the cat) both read from and write to this store.
  *
- * The `persist` middleware writes state to localStorage, so the user's room
- * survives a page refresh — a one-line feature that feels like magic.
+ * v2 additions:
+ *  - `currentTheme` + `setTheme` — the Style Sheet system. Materials across
+ *    all 21 models read the active theme's color slots, so this one string
+ *    re-skins the whole scene.
+ *  - `catEnabled` — toggles the Cat Tracker agent.
+ *  - persist `version: 2` + `migrate` — old saves may contain furniture
+ *    types that no longer exist; migration filters them out instead of
+ *    crashing. Schema versioning is exactly how real SaaS apps evolve
+ *    localStorage data.
  */
 
 interface NookState {
   room: RoomSize;
   placedItems: PlacedItem[];
   selectedId: string | null;
-  /** While set, OrbitControls are disabled so dragging an item doesn't spin the camera */
+  /** While set, OrbitControls are disabled so dragging can't spin the camera */
   draggingId: string | null;
   soundOn: boolean;
+  currentTheme: ThemeName;
+  catEnabled: boolean;
 
   addItem: (type: FurnitureType) => void;
   moveItem: (id: string, x: number, z: number) => void;
@@ -31,6 +40,8 @@ interface NookState {
   select: (id: string | null) => void;
   setDragging: (id: string | null) => void;
   setRoom: (size: Partial<RoomSize>) => void;
+  setTheme: (name: ThemeName) => void;
+  toggleCat: () => void;
   toggleSound: () => void;
   clearRoom: () => void;
 }
@@ -45,12 +56,14 @@ export const useNookStore = create<NookState>()(
       selectedId: null,
       draggingId: null,
       soundOn: true,
+      currentTheme: 'cottage',
+      catEnabled: true,
 
       addItem: (type) => {
         const def = CATALOG[type];
-        const { room } = get();
-        // Spawn near the center with a small random snapped offset so
-        // repeated spawns don't stack perfectly on top of each other.
+        const { room, currentTheme } = get();
+        // New items spawn already on-theme: default color = a theme swatch
+        const theme = THEMES[currentTheme];
         const [x, z] = clampToRoom(
           snap(Math.random() * 2 - 1),
           snap(Math.random() * 2 - 1),
@@ -62,7 +75,7 @@ export const useNookStore = create<NookState>()(
           type,
           position: [x, 0, z],
           rotation: 0,
-          color: def.defaultColor,
+          color: theme.swatches[def.swatch % theme.swatches.length],
         };
         set((s) => ({ placedItems: [...s.placedItems, item], selectedId: item.id }));
       },
@@ -117,7 +130,6 @@ export const useNookStore = create<NookState>()(
         room.depth = Math.min(Math.max(room.depth, 4), 14);
         set((s) => ({
           room,
-          // Pull any furniture that's now outside back into the resized room
           placedItems: s.placedItems.map((p) => {
             const def = CATALOG[p.type];
             const [x, z] = clampToRoom(p.position[0], p.position[2], def.half, room);
@@ -126,13 +138,35 @@ export const useNookStore = create<NookState>()(
         }));
       },
 
+      setTheme: (name) => set({ currentTheme: name }),
+      toggleCat: () => set((s) => ({ catEnabled: !s.catEnabled })),
       toggleSound: () => set((s) => ({ soundOn: !s.soundOn })),
       clearRoom: () => set({ placedItems: [], selectedId: null, draggingId: null }),
     }),
     {
       name: 'nook-room',
-      // Only persist the data that matters; never persist transient UI state
-      partialize: (s) => ({ room: s.room, placedItems: s.placedItems, soundOn: s.soundOn }),
+      version: 2,
+      partialize: (s) => ({
+        room: s.room,
+        placedItems: s.placedItems,
+        soundOn: s.soundOn,
+        currentTheme: s.currentTheme,
+        catEnabled: s.catEnabled,
+      }),
+      migrate: (persisted: unknown, version: number) => {
+        const state = (persisted ?? {}) as Partial<NookState>;
+        if (version < 2) {
+          // v1 saves contain the old 6-item catalog ('sofa', 'chair', …).
+          // Drop anything the new catalog doesn't recognize.
+          state.placedItems = (state.placedItems ?? []).filter(
+            (p) => p && p.type in CATALOG,
+          );
+          if (!state.currentTheme || !(state.currentTheme in THEMES)) {
+            state.currentTheme = 'cottage';
+          }
+        }
+        return state;
+      },
     },
   ),
 );

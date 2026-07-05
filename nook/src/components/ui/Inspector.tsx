@@ -1,4 +1,5 @@
-import { CATALOG, PASTELS } from '../../data/catalog';
+import { CATALOG } from '../../data/catalog';
+import { THEMES } from '../../data/themes';
 import { useNookStore } from '../../store/useNookStore';
 import { playTick } from '../../lib/sound';
 
@@ -12,6 +13,7 @@ import { playTick } from '../../lib/sound';
 
 export function Inspector() {
   const item = useNookStore((s) => s.placedItems.find((p) => p.id === s.selectedId));
+  const swatches = useNookStore((s) => THEMES[s.currentTheme].swatches);
   const rotateItem = useNookStore((s) => s.rotateItem);
   const recolorItem = useNookStore((s) => s.recolorItem);
   const removeItem = useNookStore((s) => s.removeItem);
@@ -66,7 +68,7 @@ export function Inspector() {
           <div className="row">
             <span className="small">Color</span>
             <div className="swatches">
-              {PASTELS.map((hex) => (
+              {swatches.map((hex) => (
                 <button
                   key={hex}
                   className={'swatch' + (item.color === hex ? ' active' : '')}

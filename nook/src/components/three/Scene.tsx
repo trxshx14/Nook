@@ -5,6 +5,7 @@ import { Room } from './Room';
 import { Furniture } from './Furniture';
 import { DragPlane } from './DragPlane';
 import { SelectionRing } from './SelectionRing';
+import { CatTracker } from './CatTracker';
 
 /**
  * ─── PHASE 2: The Scene ──────────────────────────────────────────────────
@@ -26,6 +27,7 @@ import { SelectionRing } from './SelectionRing';
 export function Scene() {
   const placedItems = useNookStore((s) => s.placedItems);
   const draggingId = useNookStore((s) => s.draggingId);
+  const catEnabled = useNookStore((s) => s.catEnabled);
 
   return (
     <Canvas
@@ -58,6 +60,7 @@ export function Scene() {
 
       <SelectionRing />
       <DragPlane />
+      {catEnabled && <CatTracker />}
 
       <OrbitControls
         makeDefault

@@ -5,6 +5,7 @@ import { Sidebar } from './components/ui/Sidebar';
 import { Inspector } from './components/ui/Inspector';
 import { DataPanel } from './components/ui/DataPanel';
 import { useNookStore } from './store/useNookStore';
+import { THEMES } from './data/themes';
 import { playTick } from './lib/sound';
 
 /**
@@ -16,6 +17,14 @@ import { playTick } from './lib/sound';
 
 export default function App() {
   const [dataOpen, setDataOpen] = useState(false);
+  const currentTheme = useNookStore((s) => s.currentTheme);
+
+  // The canvas renders with alpha, so the page background IS the sky.
+  // Re-painting <body> completes the theme swap outside WebGL too.
+  useEffect(() => {
+    const [a, b, c] = THEMES[currentTheme].bg;
+    document.body.style.background = `linear-gradient(160deg, ${a} 0%, ${b} 40%, ${c} 100%)`;
+  }, [currentTheme]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

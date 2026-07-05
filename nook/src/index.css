@@ -430,3 +430,105 @@ input[type='range']:focus-visible::-webkit-slider-thumb {
     display: none;
   }
 }
+
+/* ─── v2: theme picker, category sections, cat bubble ─── */
+
+.theme-picker {
+  display: flex;
+  gap: 6px;
+}
+
+.theme-chip {
+  font: inherit;
+  font-weight: 800;
+  font-size: 12px;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+  padding: 6px 12px 6px 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  transition:
+    transform 0.12s ease,
+    border-color 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.theme-chip:hover {
+  transform: translateY(-1px);
+  border-color: var(--blush);
+}
+
+.theme-chip:focus-visible {
+  outline: 3px solid var(--sky);
+  outline-offset: 2px;
+}
+
+.theme-chip.active {
+  border-color: var(--ink);
+  box-shadow: 0 3px 10px rgba(90, 70, 50, 0.16);
+}
+
+.theme-dots {
+  width: 26px;
+  height: 14px;
+  border-radius: 99px;
+  border: 1.5px solid rgba(0, 0, 0, 0.08);
+}
+
+.cat-section + .cat-section {
+  margin-top: 16px;
+}
+
+.cat-section h2 {
+  font-size: 12px;
+  letter-spacing: 0.8px;
+}
+
+/* the Cat Tracker's blocked alert (rendered via drei <Html>) */
+.cat-bubble {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  background: #fff;
+  border: 1.5px solid var(--line);
+  border-radius: 14px 14px 14px 3px;
+  padding: 6px 11px;
+  white-space: nowrap;
+  box-shadow: 0 6px 16px rgba(90, 70, 50, 0.18);
+  opacity: 0;
+  transform: translateY(6px) scale(0.9);
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s cubic-bezier(0.34, 1.5, 0.5, 1);
+  pointer-events: none;
+}
+
+.cat-bubble.show {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+@media (max-width: 1100px) {
+  .theme-chip {
+    padding: 6px 8px;
+  }
+  .theme-chip .theme-dots + * {
+    display: none;
+  }
+}
+
+/* the top bar got busy in v2 — let it scroll rather than overflow */
+@media (max-width: 1280px) {
+  header {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  header::-webkit-scrollbar {
+    display: none;
+  }
+}

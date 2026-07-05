@@ -1,6 +1,6 @@
 # 🛋️ Nook — a cozy 3D room arranger
 
-A lightweight, beginner-friendly interior design app. Pick pastel furniture from a sidebar, drop it into a 3D room, drag it around (it snaps to the grid like LEGO), rotate it with a slider, recolor it with swatches. Think *Animal Crossing meets a premium minimalist design tool*.
+A lightweight, beginner-friendly interior design app. Pick from **21 pastel furniture items across 6 categories**, drop them into a 3D room, drag them around (they snap to the grid like LEGO), rotate with a slider, recolor with swatches — then re-skin the entire room with one-click **aesthetic themes** (Cozy Cottage / Retro 70s / Space Minimalist) while a resident **pathfinding cat** wanders the floor and complains when your furniture blocks its way. Think *Animal Crossing meets a premium minimalist design tool*.
 
 **Stack:** Vite · React 18 · TypeScript · React Three Fiber · drei · Zustand
 
@@ -48,26 +48,30 @@ Add an object to the array → a sofa appears. Change `position` → the sofa mo
 
 ```
 src/
-├── types.ts                      # PlacedItem schema — start here
-├── store/useNookStore.ts         # Zustand store: all state + all actions
-├── data/catalog.tsx              # furniture definitions + primitive 3D models
+├── types.ts                      # PlacedItem schema + the 21-type union — start here
+├── store/useNookStore.ts         # Zustand store: all state + actions, persist v2 migration
+├── data/
+│   ├── catalog.tsx               # 21 primitive-built models across 6 categories
+│   └── themes.ts                 # the "Style Sheet" system: 3 themes × color slots
 ├── lib/
 │   ├── math.ts                   # snap(), clampToRoom(), easeOutBack()
 │   ├── dragState.ts              # the grab-offset vector (mutable, non-React)
-│   └── sound.ts                  # Web Audio "tick" synth
+│   ├── sound.ts                  # Web Audio "tick" synth
+│   └── textures.ts               # procedural CanvasTextures (TV screens, rug, weave)
 ├── components/
 │   ├── three/                    # everything inside the <Canvas>
 │   │   ├── Scene.tsx             # Canvas, lights, OrbitControls, the .map()
-│   │   ├── Room.tsx              # floor, grid, auto-fading walls
+│   │   ├── Room.tsx              # theme-colored floor, grid, auto-fading walls
 │   │   ├── Furniture.tsx         # renders one item, starts drags, pop/pulse anims
 │   │   ├── DragPlane.tsx         # invisible plane that powers dragging + snapping
-│   │   └── SelectionRing.tsx     # pulsing ring under the selected item
+│   │   ├── SelectionRing.tsx     # pulsing ring under the selected item
+│   │   └── CatTracker.tsx        # the wandering pathfinding cat + blocked bubble
 │   └── ui/                       # plain HTML floating over the canvas
-│       ├── TopBar.tsx            # room size inputs, toggles
-│       ├── Sidebar.tsx           # click-to-spawn catalog
-│       ├── Inspector.tsx         # rotate slider, color swatches, dup/remove
+│       ├── TopBar.tsx            # room size, theme picker, cat/sound/data toggles
+│       ├── Sidebar.tsx           # click-to-spawn catalog, grouped by category
+│       ├── Inspector.tsx         # rotate slider, theme swatches, dup/remove
 │       └── DataPanel.tsx         # live JSON view of placedItems
-├── App.tsx                       # composition + keyboard shortcuts
+├── App.tsx                       # composition, keyboard shortcuts, theme background
 └── index.css                     # the pastel design system
 ```
 
@@ -189,19 +193,63 @@ The features that separate "works" from "feels amazing":
 npm run build
 ```
 
-Deploy `dist/` to Netlify, Vercel, or GitHub Pages. Then record a 30-second screen capture for your README/LinkedIn: spawn → drag (with the data panel open!) → rotate → recolor → refresh to show persistence.
+Deploy `dist/` to Netlify, Vercel, or GitHub Pages. Then record a 30-second screen capture for your README/LinkedIn: spawn → drag (with the data panel open!) → rotate → recolor → switch themes → refresh to show persistence.
+
+---
+
+# 🚀 The v2 systems (Phases 8–10)
+
+Version 2 is where the project stops being a demo and starts being a product. Each system below is also a self-contained lesson.
+
+## Phase 8 — A catalog at scale (21 items, 6 categories)
+
+The interesting problem isn't modeling 21 pieces of furniture — it's doing that *without the code becoming 21 copies of the same boilerplate*. Study `catalog.tsx`:
+
+- **Part helpers** (`Bx`, `Cy`, `Sp`, `Tr`) wrap a mesh + `meshPhysicalMaterial` pair so each model reads like a parts list instead of 40 lines of JSX per primitive. When you find yourself typing the same 6-line block for the third time, that's the signal to extract a helper.
+- **The registry does the wiring.** Each entry declares its `category`, footprint, obstacle flag and default swatch; `CATALOG_BY_CATEGORY` derives the grouped sidebar from it. Adding item #22 = write one model function, add one registry line. The sidebar, spawn logic, clamping, cat avoidance, and inspector all pick it up automatically. *Extensible by construction* is a phrase worth using in interviews.
+- **Persistence must survive schema changes.** The v1 catalog had types like `'sofa'` that no longer exist, and old saves live in visitors' localStorage. The store's `persist` config now carries `version: 2` and a `migrate` function that filters unknown types instead of crashing. Every real SaaS app does exactly this dance.
+- **Procedural textures** (`lib/textures.ts`): the rug's checkerboard, the sideboard's rattan weave, and the pegboard's dot grid are drawn on tiny offscreen `<canvas>` elements and wrapped in `THREE.CanvasTexture` — zero image downloads.
+
+**Exercise:** add a `'toy_chest'` item. You should only need to touch `types.ts` (one union member) and `catalog.tsx` (one model + one registry line).
+
+## Phase 9 — The "Style Sheet" theme system
+
+Open the theme picker and flip between Cozy Cottage 🏡, Retro 70s 🕺, and Space Minimalist 🌙. Floors, walls, wood grains, lamp glows, the page background — and the TV broadcast — all change from a single store write. The design that makes this possible:
+
+- **Themes define slots, not item colors** (`data/themes.ts`). A `Theme` is `{ wood, woodDark, secondary, leaf, emissive, floor, wall, swatches, screen … }`. Every mesh part in the catalog is *tagged* by which slot it reads: `color={theme.wood}` for legs, `e={theme.emissive}` for glows, `color={color}` for primary fabric. Swapping the theme re-resolves every tag. This is the 3D equivalent of CSS custom properties — hence the feature's name.
+- **User intent is preserved.** Primary parts keep the per-item `color` the user chose; only the theme supplies the swatch *palette* and spawn defaults. Re-painting a user's deliberate choices on theme-switch would be a UX betrayal — the distinction between "system-owned" and "user-owned" color is a design decision, not a technical one.
+- **The TV is the showpiece** (`RetroTelevision` in `catalog.tsx` + `makeScreenTexture` in `textures.ts`). Each theme describes a screen pattern — amber fireplace, groovy waves, neon perspective grid — drawn procedurally and applied as both `map` and `emissiveMap`, so the screen genuinely *glows* with its broadcast. `useMemo(..., [theme])` regenerates it only on theme change.
+- Note the plumbing detail in `Room.tsx`: `<gridHelper args={[..., theme.grid[0], theme.grid[1]]}>` — changing `args` makes R3F rebuild the helper, which is how the grid re-colors without manual disposal.
+
+**Exercise:** add a fourth theme ("Strawberry Milk"? "Forest Cabin"?). It's one object in `themes.ts` — everything else, including the picker button, derives from `THEME_LIST`.
+
+## Phase 10 — The Cat Tracker (a pathfinding agent)
+
+`CatTracker.tsx` is a tiny autonomous agent living in your room, and it's the loudest proof that `placedItems` is *real, queryable application data*: an AI is literally navigating your interior-design decisions.
+
+The loop, running in `useFrame`:
+
+1. **Idle** → pick a random snapped cell as a destination.
+2. **Validate against the store**: build inflated AABBs from every `obstacle: true` item's position + footprint (inflated by the cat's radius so she doesn't clip corners), then check (a) is the destination inside any box, and (b) **line of sight** — sample points every 20cm along the straight path and test each. Fail either → discard the path.
+3. After 14 failed candidates → **sit**, flip `isBlocked` to true, and a floating drei `<Html>` bubble ("🐈? Blocked!") fades in with a plain CSS transition. HTML in 3D space is a superpower: real DOM, real CSS, positioned by the scene graph.
+4. **Walk** → step toward the target with a trot-bob, smoothly turning toward the heading (note the `atan2` wrap-around when lerping angles). If you *drop furniture onto her path mid-walk*, the per-step check catches it and she sits down in protest. Try it — it's the best demo moment in the app.
+
+Architecture notes worth internalizing: continuous motion (position, target, mode, timers) lives in a **ref**, mutated at 60fps with zero re-renders; React state is used for exactly one thing — `isBlocked` — because it's the only fact the DOM needs. And the cat reads the store via `useNookStore.getState()` inside the frame loop rather than subscribing, so store churn never re-renders the cat.
+
+**Exercises, easy → hard:** make rugs attract the cat (cats sit on soft things — search `obstacle: false` rug items and bias target picks toward them) · give her a "zoomies" mode with 3× speed every few minutes · replace the straight-line check with real **A\*** over the 0.5m grid so she routes *around* furniture instead of refusing — the honest next step, and a fantastic algorithms exercise.
 
 ---
 
 ## Stretch goals (roughly in order of impact-per-effort)
 
 1. **Undo/redo** — keep a `past[]`/`future[]` of `placedItems` snapshots in the store; `Ctrl+Z` pops one. Centralized state makes this almost trivial, and it's a massive flex.
-2. **Collision highlighting** — two items' footprints overlap → tint them red. Pure 2D AABB math on `position` + `half`.
-3. **Rotation-aware clamping** — currently a rotated sofa's footprint isn't recalculated when clamping to walls. Swap `half` for a footprint rotated by `item.rotation` (or simply use the bounding circle).
-4. **Real GLTF models** — make chunky models in Blockbench, or grab CC0 packs (Kenney, Poly Pizza), load with drei's `useGLTF`. Only `catalog.tsx` changes.
-5. **Top-down 2D mode** — animate the camera to directly overhead and switch to an orthographic view: instant "floor plan" mode that justifies the app's name.
-6. **Share via URL** — serialize `placedItems` into the query string so a room layout becomes a shareable link.
-7. **Touch support pass** — pinch-zoom, larger hit targets, a mobile inspector layout.
+2. **A\* pathfinding for the cat** — upgrade her from "refuse blocked paths" to "route around furniture" over the 0.5m grid. The obstacle AABBs are already built; this is a pure algorithms exercise with an adorable payoff.
+3. **Collision highlighting** — two items' footprints overlap → tint them red. Pure 2D AABB math on `position` + `half` (the cat's `obstacleBoxes()` already shows the pattern).
+4. **Rotation-aware clamping** — a rotated loveseat's footprint isn't recalculated when clamping to walls. Swap `half` for a footprint rotated by `item.rotation` (or simply use the bounding circle).
+5. **Real GLTF models** — make chunky models in Blockbench, or grab CC0 packs (Kenney, Poly Pizza), load with drei's `useGLTF`. Only `catalog.tsx` changes.
+6. **Top-down 2D mode** — animate the camera to directly overhead and switch to an orthographic view: instant "floor plan" mode that justifies the app's name.
+7. **Share via URL** — serialize `placedItems` + `currentTheme` into the query string so a styled room becomes a shareable link.
+8. **Touch support pass** — pinch-zoom, larger hit targets, a mobile inspector layout.
 
 ## Interview talking points
 
@@ -211,5 +259,8 @@ When you demo this, be ready to answer (all answered in the code comments):
 - *"Why Zustand instead of useState/Context?"* → shared between the DOM tree and the Canvas tree without prop drilling; readable outside React (`getState()`) for event handlers; `persist` for free; no provider re-render cascades.
 - *"How do you keep 60fps?"* → animations mutate refs in `useFrame` instead of setState; store writes are throttled to cell changes; scratch `Vector3`s are reused instead of allocated per event.
 - *"What was the hardest UX problem?"* → making drag feel trustworthy: the grab offset (no jumping), the drag plane (no dead drags), disabling orbit (no camera fights), and snapping (no pixel-perfect fiddling).
+- *"How do themes work?"* → themes define color **slots**, mesh parts are tagged by slot, switching themes re-resolves every tag — CSS custom properties, but for 3D materials. User-chosen primary colors are deliberately preserved.
+- *"How does the cat 'see' furniture?"* → it doesn't raycast; it reads the same `placedItems` array the renderer uses, builds inflated AABBs from each obstacle's footprint, and validates destination + sampled line-of-sight before walking. One source of truth serves rendering, UI, persistence, *and* AI.
+- *"How would you evolve the data schema without breaking users?"* → exactly like v1→v2 did: `persist` versioning with a `migrate` function that filters or transforms stale records.
 
 Have fun — and make the room yours. 🌸
