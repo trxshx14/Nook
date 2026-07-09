@@ -30,6 +30,11 @@ interface NookState {
   soundOn: boolean;
   currentTheme: ThemeName;
   catEnabled: boolean;
+  /**
+   * "Wall Canvas" paint. `null` means "follow the theme's default wall";
+   * a hex string is an explicit user choice that survives theme switches.
+   */
+  wallColor: string | null;
 
   addItem: (type: FurnitureType) => void;
   moveItem: (id: string, x: number, z: number) => void;
@@ -41,6 +46,7 @@ interface NookState {
   setDragging: (id: string | null) => void;
   setRoom: (size: Partial<RoomSize>) => void;
   setTheme: (name: ThemeName) => void;
+  setWallColor: (color: string | null) => void;
   toggleCat: () => void;
   toggleSound: () => void;
   clearRoom: () => void;
@@ -58,6 +64,7 @@ export const useNookStore = create<NookState>()(
       soundOn: true,
       currentTheme: 'cottage',
       catEnabled: true,
+      wallColor: null,
 
       addItem: (type) => {
         const def = CATALOG[type];
@@ -139,31 +146,35 @@ export const useNookStore = create<NookState>()(
       },
 
       setTheme: (name) => set({ currentTheme: name }),
+      setWallColor: (color) => set({ wallColor: color }),
       toggleCat: () => set((s) => ({ catEnabled: !s.catEnabled })),
       toggleSound: () => set((s) => ({ soundOn: !s.soundOn })),
       clearRoom: () => set({ placedItems: [], selectedId: null, draggingId: null }),
     }),
     {
       name: 'nook-room',
-      version: 2,
+      version: 3,
       partialize: (s) => ({
         room: s.room,
         placedItems: s.placedItems,
         soundOn: s.soundOn,
         currentTheme: s.currentTheme,
         catEnabled: s.catEnabled,
+        wallColor: s.wallColor,
       }),
       migrate: (persisted: unknown, version: number) => {
         const state = (persisted ?? {}) as Partial<NookState>;
-        if (version < 2) {
-          // v1 saves contain the old 6-item catalog ('sofa', 'chair', …).
-          // Drop anything the new catalog doesn't recognize.
+        if (version < 3) {
+          // v1/v2 saves contain retired furniture types (loveseat, desk,
+          // retro TV, …). Drop anything the v3 catalog doesn't recognize
+          // instead of crashing the renderer.
           state.placedItems = (state.placedItems ?? []).filter(
             (p) => p && p.type in CATALOG,
           );
           if (!state.currentTheme || !(state.currentTheme in THEMES)) {
             state.currentTheme = 'cottage';
           }
+          state.wallColor = state.wallColor ?? null;
         }
         return state;
       },

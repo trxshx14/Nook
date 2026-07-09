@@ -1,35 +1,41 @@
 import { useNookStore } from '../../store/useNookStore';
-import { THEME_LIST } from '../../data/themes';
+import { THEMES, THEME_LIST } from '../../data/themes';
 import { playTick } from '../../lib/sound';
 
 /**
- * ─── PHASE 5 (v2): 2D UI ↔ 3D scene ─────────────────────────────────────
- * The theme picker is the loudest proof of the shared-store architecture:
- * three plain HTML buttons, and clicking one re-skins the entire WebGL
- * scene — floor, walls, wood grains, lamp glows, and the TV broadcast.
+ * ─── PHASE 5 (v3): The navbar ────────────────────────────────────────────
+ * v3 additions:
+ *  - The NOOK wordmark: a premium serif with wide tracking whose ink color
+ *    adapts to the active theme (deep charcoal on warm themes, slate on
+ *    the cool one) — editorial branding, not a default sans logo.
+ *  - "Wall Canvas": four theme-tuned pastel swatches that write straight
+ *    to `wallColor` in the store; the 3D wall materials read it live.
+ *    The ↺ chip returns the walls to "follow the theme".
+ *  - The gear opens the cozy settings modal (sound/cat/clear moved there
+ *    to keep the toolbar calm).
  */
 
 interface Props {
   dataOpen: boolean;
   onToggleData: () => void;
+  onOpenSettings: () => void;
 }
 
-export function TopBar({ dataOpen, onToggleData }: Props) {
+export function TopBar({ dataOpen, onToggleData, onOpenSettings }: Props) {
   const room = useNookStore((s) => s.room);
   const setRoom = useNookStore((s) => s.setRoom);
   const currentTheme = useNookStore((s) => s.currentTheme);
   const setTheme = useNookStore((s) => s.setTheme);
-  const catEnabled = useNookStore((s) => s.catEnabled);
-  const toggleCat = useNookStore((s) => s.toggleCat);
-  const soundOn = useNookStore((s) => s.soundOn);
-  const toggleSound = useNookStore((s) => s.toggleSound);
-  const clearRoom = useNookStore((s) => s.clearRoom);
+  const wallColor = useNookStore((s) => s.wallColor);
+  const setWallColor = useNookStore((s) => s.setWallColor);
+
+  const theme = THEMES[currentTheme];
 
   return (
     <header>
-      <div className="logo">
-        <span className="dot" />
-        Nook
+      {/* the wordmark — serif, widest tracking, theme-adaptive ink */}
+      <div className="logo" style={{ color: theme.ink }}>
+        NOOK
       </div>
 
       <div className="room-dims">
@@ -80,19 +86,43 @@ export function TopBar({ dataOpen, onToggleData }: Props) {
         ))}
       </div>
 
+      {/* Wall Canvas — paint the room's walls */}
+      <div className="wall-canvas" role="group" aria-label="Wall Canvas">
+        <span className="wall-label">Wall Canvas</span>
+        {theme.wallPresets.map((hex) => (
+          <button
+            key={hex}
+            className={'wall-swatch' + (wallColor === hex ? ' active' : '')}
+            style={{ background: hex }}
+            aria-label={'Paint walls ' + hex}
+            aria-pressed={wallColor === hex}
+            onClick={() => {
+              setWallColor(hex);
+              playTick(820, 0.03);
+            }}
+          />
+        ))}
+        <button
+          className={'wall-swatch auto' + (wallColor === null ? ' active' : '')}
+          aria-label="Walls follow the theme"
+          aria-pressed={wallColor === null}
+          title="Follow theme"
+          onClick={() => {
+            setWallColor(null);
+            playTick(600, 0.03);
+          }}
+        >
+          ↺
+        </button>
+      </div>
+
       <div className="spacer" />
 
-      <button className="chip-btn" aria-pressed={catEnabled} onClick={toggleCat}>
-        {catEnabled ? '🐈 Cat on' : '🐈‍⬛ Cat off'}
-      </button>
-      <button className="chip-btn" onClick={clearRoom}>
-        🧹 Clear
-      </button>
-      <button className="chip-btn" aria-pressed={soundOn} onClick={toggleSound}>
-        {soundOn ? '🔔' : '🔕'}
-      </button>
       <button className="chip-btn" aria-pressed={dataOpen} onClick={onToggleData}>
         {'{ }'} Data
+      </button>
+      <button className="chip-btn" onClick={onOpenSettings} aria-label="Open settings" title="Settings">
+        ⚙
       </button>
     </header>
   );

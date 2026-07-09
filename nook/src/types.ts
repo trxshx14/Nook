@@ -3,46 +3,61 @@
  * The "source of truth" for the entire app. The 3D scene never owns data —
  * it is a pure rendering of this state.
  *
- * v2: the catalog grew from 6 to 21 items across six categories, and a
- * ThemeName now lives alongside the room data.
+ * v3.1: the full 36-item catalog — the 15 new v3 pieces PLUS the restored
+ * v2 collection — organized under six categories.
  */
 
 export type FurnitureType =
-  // Seating
+  /* ── Seating & Comfort ── */
+  | 'clover_armchair'
+  | 'cloud_floor_pillow'
+  | 'scalloped_bench'
   | 'cozy_loveseat'
   | 'cloud_accent_chair'
   | 'tulip_stool'
   | 'slouchy_beanbag'
-  // Surfaces
+  /* ── Surfaces & Workspaces ── */
+  | 'flower_side_table'
+  | 'l-shaped_craft_station'
+  | 'tiered_console_table'
   | 'pebble_coffee_table'
   | 'study_desk'
   | 'floating_nightstand'
   | 'circular_dining_table'
-  // Storage & Display
+  /* ── Shelving & Specialty Display ── */
+  | 'honeycomb_wall_shelf'
+  | 'vintage_magazine_rack'
+  | 'glass_display_cabinet'
   | 'arched_bookshelf'
   | 'modular_cubes'
   | 'rattan_sideboard'
   | 'pegboard_panel'
-  // Media & Tech
+  /* ── Media & Tech ── */
   | 'retro_television'
-  // Lighting
+  /* ── Lighting & Ambience ── */
+  | 'tulip_desk_lamp'
+  | 'pleated_floor_lamp'
+  | 'bunny_nightlight'
   | 'mushroom_table_lamp'
   | 'arc_floor_lamp'
   | 'paper_lantern'
   | 'starry_nightlight'
-  // Greenery & Decor
+  /* ── Coziness & Greenery ── */
+  | 'terrarium_pod'
+  | 'heart_leaf_ivy'
+  | 'fluffy_cloud_rug'
   | 'potted_monstera'
   | 'hanging_pothos'
   | 'wavy_floor_mirror'
   | 'plush_checkered_rug';
 
 export type Category =
-  | 'Seating'
-  | 'Surfaces'
-  | 'Storage & Display'
+  | 'Seating & Comfort'
+  | 'Surfaces & Workspaces'
+  | 'Shelving & Specialty Display'
   | 'Media & Tech'
-  | 'Lighting'
-  | 'Greenery & Decor';
+  | 'Lighting & Ambience'
+  | 'Coziness & Greenery';
 
 export type ThemeName = 'cottage' | 'retro70s' | 'space';
 

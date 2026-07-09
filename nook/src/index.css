@@ -60,14 +60,16 @@ header {
   border-bottom: 1px solid var(--line);
 }
 
+/* v3: editorial serif wordmark — widest tracking, theme-adaptive ink
+   (color is set inline from the active theme) */
 .logo {
-  font-family: 'Fredoka', sans-serif;
+  font-family: 'Fraunces', Georgia, serif;
   font-weight: 600;
-  font-size: 24px;
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  letter-spacing: 0.5px;
+  font-size: 21px;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  margin-right: -0.34em; /* optically re-center: tracking pads the right edge */
+  user-select: none;
 }
 
 .logo .dot {
@@ -531,4 +533,202 @@ input[type='range']:focus-visible::-webkit-slider-thumb {
   header::-webkit-scrollbar {
     display: none;
   }
+}
+
+/* ─── v3: Wall Canvas, settings modal ─── */
+
+.wall-canvas {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 12px;
+  background: var(--paper);
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+}
+
+.wall-label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+  margin-right: 2px;
+  white-space: nowrap;
+}
+
+.wall-swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1.5px var(--line);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--ink-soft);
+  display: grid;
+  place-items: center;
+  padding: 0;
+  transition: transform 0.12s ease;
+}
+
+.wall-swatch:hover {
+  transform: scale(1.15);
+}
+
+.wall-swatch:focus-visible {
+  outline: 3px solid var(--sky);
+  outline-offset: 2px;
+}
+
+.wall-swatch.active {
+  box-shadow: 0 0 0 2.5px var(--ink);
+}
+
+.wall-swatch.auto {
+  background: var(--cream);
+}
+
+/* ── settings modal ── */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgba(74, 65, 57, 0.28);
+  backdrop-filter: blur(6px);
+  display: grid;
+  place-items: center;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal {
+  width: min(460px, calc(100% - 32px));
+  max-height: calc(100% - 64px);
+  overflow-y: auto;
+  background: var(--cream);
+  border: 1px solid var(--line);
+  border-radius: 28px; /* rounded-3xl energy */
+  box-shadow: 0 30px 80px rgba(60, 45, 30, 0.28);
+  padding: 22px;
+  animation: modalPop 0.28s cubic-bezier(0.34, 1.4, 0.5, 1);
+}
+
+@keyframes modalPop {
+  from { transform: translateY(18px) scale(0.96); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px 6px 14px;
+}
+
+.modal-head h2 {
+  font-family: 'Fraunces', Georgia, serif;
+  font-weight: 600;
+  font-size: 21px;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+}
+
+.modal-card {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  padding: 8px 18px;
+}
+
+.modal-card + .modal-card {
+  margin-top: 14px;
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 0;
+}
+
+.setting-row + .setting-row {
+  border-top: 1px solid var(--line);
+}
+
+.setting-name {
+  font-weight: 800;
+  font-size: 14px;
+}
+
+.setting-desc {
+  font-size: 12px;
+  color: var(--ink-soft);
+  margin-top: 2px;
+}
+
+/* pill switch */
+.switch {
+  position: relative;
+  width: 46px;
+  height: 26px;
+  flex: none;
+  border-radius: 99px;
+  border: 1.5px solid var(--line);
+  background: var(--cream);
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease;
+  padding: 0;
+}
+
+.switch .knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 19px;
+  height: 19px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.18);
+  transition: transform 0.18s cubic-bezier(0.34, 1.4, 0.5, 1);
+}
+
+.switch.on {
+  background: var(--mint);
+  border-color: #9ECBAE;
+}
+
+.switch.on .knob {
+  transform: translateX(20px);
+}
+
+.switch:focus-visible {
+  outline: 3px solid var(--sky);
+  outline-offset: 2px;
+}
+
+/* the About diary block */
+.modal-card.about {
+  padding: 20px 22px;
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: var(--ink);
+}
+
+.modal-card.about p + p {
+  margin-top: 12px;
+}
+
+.modal-card.about .signature {
+  font-style: italic;
+  color: var(--ink-soft);
 }

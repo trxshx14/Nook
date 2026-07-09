@@ -20,6 +20,8 @@ const WALL_T = 0.15;
 export function Room() {
   const room = useNookStore((s) => s.room);
   const theme = useNookStore((s) => THEMES[s.currentTheme]);
+  // "Wall Canvas": an explicit user paint wins; otherwise follow the theme
+  const wallColor = useNookStore((s) => s.wallColor) ?? theme.wall;
   const select = useNookStore((s) => s.select);
   const wallBack = useRef<MeshStandardMaterial>(null); // at -Z
   const wallLeft = useRef<MeshStandardMaterial>(null); // at -X
@@ -63,13 +65,13 @@ export function Room() {
       {/* back wall (-Z) */}
       <mesh position={[0, WALL_H / 2, -room.depth / 2 - WALL_T / 2]} receiveShadow>
         <boxGeometry args={[room.width + 0.3, WALL_H, WALL_T]} />
-        <meshStandardMaterial ref={wallBack} color={theme.wall} roughness={0.95} transparent />
+        <meshStandardMaterial ref={wallBack} color={wallColor} roughness={0.95} transparent />
       </mesh>
 
       {/* left wall (-X) */}
       <mesh position={[-room.width / 2 - WALL_T / 2, WALL_H / 2, 0]} receiveShadow>
         <boxGeometry args={[WALL_T, WALL_H, room.depth + 0.3]} />
-        <meshStandardMaterial ref={wallLeft} color={theme.wall} roughness={0.95} transparent />
+        <meshStandardMaterial ref={wallLeft} color={wallColor} roughness={0.95} transparent />
       </mesh>
 
       {/* a soft round window on the back wall, glowing in the theme's light */}

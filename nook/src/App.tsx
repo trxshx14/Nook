@@ -4,19 +4,21 @@ import { TopBar } from './components/ui/TopBar';
 import { Sidebar } from './components/ui/Sidebar';
 import { Inspector } from './components/ui/Inspector';
 import { DataPanel } from './components/ui/DataPanel';
+import { SettingsModal } from './components/ui/SettingsModal';
 import { useNookStore } from './store/useNookStore';
 import { THEMES } from './data/themes';
 import { playTick } from './lib/sound';
 
 /**
- * ─── PHASE 6: Composition & Keyboard Shortcuts ───────────────────────────
+ * ─── PHASE 6 (v3): Composition & Keyboard Shortcuts ──────────────────────
  * The layout: a full-screen 3D canvas with HTML floating on top of it.
- * Notice that App knows nothing about Three.js — the boundary between the
- * 2D and 3D worlds is the store, not props.
+ * App still knows nothing about Three.js — the boundary between the 2D
+ * and 3D worlds is the store, not props. v3 adds the settings modal.
  */
 
 export default function App() {
   const [dataOpen, setDataOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const currentTheme = useNookStore((s) => s.currentTheme);
 
   // The canvas renders with alpha, so the page background IS the sky.
@@ -58,10 +60,15 @@ export default function App() {
       <div id="scene">
         <Scene />
       </div>
-      <TopBar dataOpen={dataOpen} onToggleData={() => setDataOpen((v) => !v)} />
+      <TopBar
+        dataOpen={dataOpen}
+        onToggleData={() => setDataOpen((v) => !v)}
+        onOpenSettings={() => setSettingsOpen(true)}
+      />
       <Sidebar />
       <Inspector />
       <DataPanel open={dataOpen} />
+      <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </>
   );
 }

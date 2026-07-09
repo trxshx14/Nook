@@ -27,9 +27,13 @@ export interface Theme {
   emoji: string;
   /** CSS gradient stops applied to <body> behind the transparent canvas */
   bg: [string, string, string];
+  /** the branding/logo ink — dark charcoal on warm themes, deep slate on cool */
+  ink: string;
   floor: string;
   plinth: string;
   wall: string;
+  /** the "Wall Canvas" paint swatches offered for this theme */
+  wallPresets: [string, string, string, string];
   grid: [string, string];
   wood: string;
   woodDark: string;
@@ -50,9 +54,11 @@ export const THEMES: Record<ThemeName, Theme> = {
     label: 'Cozy Cottage',
     emoji: '🏡',
     bg: ['#FDEFEA', '#FDF8F1', '#EAF3F7'],
+    ink: '#4A4139',
     floor: '#F6E9D8',
     plinth: '#EAD9C3',
     wall: '#FBF3E9',
+    wallPresets: ['#FBF3E9', '#F8E2DC', '#E8F0E2', '#F2E9F5'],
     grid: ['#E8CDBA', '#F0E2D2'],
     wood: '#C9A47E',
     woodDark: '#B08A63',
@@ -69,9 +75,11 @@ export const THEMES: Record<ThemeName, Theme> = {
     label: 'Retro 70s',
     emoji: '🕺',
     bg: ['#F9EED3', '#F5E4BE', '#EFD9A8'],
+    ink: '#4A3222',
     floor: '#E8D3AC',
     plinth: '#D6BC8C',
     wall: '#F4E7C6',
+    wallPresets: ['#F4E7C6', '#F3D8B4', '#EBDDA4', '#EAD0BD'],
     grid: ['#D8BC8A', '#E6D2A6'],
     wood: '#A9713F',
     woodDark: '#8A5A30',
@@ -88,9 +96,11 @@ export const THEMES: Record<ThemeName, Theme> = {
     label: 'Space Minimalist',
     emoji: '🌙',
     bg: ['#F6F6FB', '#EEF0F9', '#E3E6F4'],
+    ink: '#3C3E4C',
     floor: '#EEEFF6',
     plinth: '#DCDFEC',
     wall: '#F8F8FC',
+    wallPresets: ['#F8F8FC', '#ECEAF8', '#E2ECF8', '#EEEDF3'],
     grid: ['#CBCFE2', '#E0E3F0'],
     wood: '#C6C9D8',
     woodDark: '#5C5F6E',
